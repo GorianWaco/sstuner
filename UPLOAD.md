@@ -4,7 +4,7 @@ Local packaging is already done. What only you can finish:
 
 ## 1. GitHub repository (required by review)
 
-`metadata.json` points to https://github.com/gorian/sstuner
+`metadata.json` points to https://github.com/GorianWaco/sstuner
 
 ```bash
 cd ~/Projekty/sstuner
@@ -12,11 +12,11 @@ gh auth login
 gh repo create sstuner --public --source=. --remote=origin --push
 ```
 
-If you prefer the website: create an empty public repo named `sstuner` under `gorian`, then:
+If you prefer the website: create an empty public repo named `sstuner` under `GorianWaco`, then:
 
 ```bash
 cd ~/Projekty/sstuner
-git remote add origin https://github.com/gorian/sstuner.git
+git remote add origin https://github.com/GorianWaco/sstuner.git
 git push -u origin main
 ```
 
@@ -30,7 +30,7 @@ Register: https://extensions.gnome.org/accounts/register/
 
 The packed file is on the Desktop:
 
-`~/Pulpit/sstuner@gorian.github.io.shell-extension.zip`
+`~/Pulpit/sstuner@gorianwaco.github.io.shell-extension.zip`
 
 Either:
 
@@ -38,7 +38,7 @@ Either:
 - Terminal (after you have the account):
 
 ```bash
-gnome-extensions upload --accept-tos ~/Pulpit/sstuner@gorian.github.io.shell-extension.zip
+gnome-extensions upload --accept-tos ~/Pulpit/sstuner@gorianwaco.github.io.shell-extension.zip
 ```
 
 ## 4. After approval

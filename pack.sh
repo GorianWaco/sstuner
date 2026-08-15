@@ -10,4 +10,4 @@ gnome-extensions pack \
   --extra-source=LICENSE \
   --force \
   -o "$out"
-echo "Packed: $out/sstuner@gorian.github.io.shell-extension.zip"
+echo "Packed: $out/sstuner@gorianwaco.github.io.shell-extension.zip"

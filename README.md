@@ -20,7 +20,7 @@ Arch: `sudo pacman -S ddcutil pipewire pipewire-audio`
 ## Install from ZIP
 
 ```bash
-gnome-extensions install sstuner@gorian.github.io.shell-extension.zip
+gnome-extensions install sstuner@gorianwaco.github.io.shell-extension.zip
 ```
 
 Then log out and back in, and enable **SSTuner** in Extension Manager.
@@ -29,7 +29,7 @@ Then log out and back in, and enable **SSTuner** in Extension Manager.
 
 ```bash
 glib-compile-schemas schemas
-cp -a . ~/.local/share/gnome-shell/extensions/sstuner@gorian.github.io
+cp -a . ~/.local/share/gnome-shell/extensions/sstuner@gorianwaco.github.io
 ```
 
 Do not symlink the project into the extensions directory before running
