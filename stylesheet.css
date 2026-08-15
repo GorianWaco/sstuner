@@ -1,0 +1,177 @@
+.sstuner-panel {
+    padding-top: 2px;
+    padding-bottom: 4px;
+}
+
+.sstuner-row {
+    spacing: 4px;
+}
+
+.sstuner-mid {
+    spacing: 1px;
+}
+
+.sstuner-slide {
+    spacing: 2px;
+}
+
+.sstuner-step {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    padding: 0;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 700;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sstuner-step:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+}
+
+.sstuner-step:active {
+    background-color: rgba(255, 255, 255, 0.24);
+}
+
+.sstuner-ticks {
+    padding: 0 10px;
+    height: 16px;
+}
+
+.sstuner-tick-line {
+    width: 1px;
+    background-color: currentColor;
+    opacity: 0.28;
+}
+
+.sstuner-tick-line-major {
+    opacity: 0.55;
+}
+
+.sstuner-tick {
+    font-size: 8px;
+    font-weight: 500;
+    opacity: 0.48;
+}
+
+.sstuner-tick-major {
+    opacity: 0.92;
+    font-weight: 700;
+}
+
+.sstuner-value {
+    min-width: 4.4em;
+    font-size: 11px;
+    font-feature-settings: "tnum";
+    font-weight: 500;
+}
+
+.sstuner-value-changed {
+    font-weight: 700;
+}
+
+.sstuner-sep {
+    height: 1px;
+    margin: 6px 6px 4px;
+    background-color: currentColor;
+    opacity: 0.12;
+}
+
+.sstuner-eq-title {
+    font-size: 10px;
+    font-weight: 600;
+    opacity: 0.55;
+    padding: 0 4px 1px;
+}
+
+.sstuner-fold {
+    spacing: 2px;
+}
+
+.sstuner-fold-header {
+    padding: 3px 2px;
+    border-radius: 8px;
+}
+
+.sstuner-fold-header:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.sstuner-fold-head {
+    spacing: 6px;
+}
+
+.sstuner-fold-chevron {
+    icon-size: 12px;
+    opacity: 0.55;
+}
+
+.sstuner-fold-title {
+    padding: 0;
+}
+
+.sstuner-fold-hint {
+    font-size: 10px;
+    font-feature-settings: "tnum";
+    opacity: 0.48;
+    padding: 0 4px 0 0;
+}
+
+.sstuner-preset-bar {
+    spacing: 4px;
+    padding: 2px 2px 4px;
+}
+
+.sstuner-preset-scroll {
+    min-height: 24px;
+}
+
+.sstuner-preset-scroll StScrollBar,
+.sstuner-preset-scroll StScrollBar * {
+    min-height: 0;
+    max-height: 0;
+    height: 0;
+    min-width: 0;
+    max-width: 0;
+    width: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+    opacity: 0;
+}
+
+.sstuner-preset-chips {
+    spacing: 4px;
+}
+
+.sstuner-preset-chip {
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.sstuner-preset-chip:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.sstuner-preset-chip-active {
+    background-color: rgba(255, 255, 255, 0.20);
+    font-weight: 700;
+}
+
+.sstuner-preset-add {
+    padding: 2px;
+}
+
+.sstuner-preset-editor {
+    spacing: 4px;
+}
+
+.sstuner-preset-entry {
+    font-size: 11px;
+    min-width: 8em;
+}
