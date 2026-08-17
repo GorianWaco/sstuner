@@ -3,8 +3,6 @@ import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
-import Meta from 'gi://Meta';
-import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -22,63 +20,36 @@ import {
     serializePresets,
 } from './presets.js';
 
-const MIN_PCT = 10;
-const MAX_PCT = 180;
-const STEP = 5;
-const MIN_CONTRAST = -50;
-const MAX_CONTRAST = 50;
-const MIN_TEMP = -100;
-const MAX_TEMP = 100;
-const MIN_SAT = -50;
-const MAX_SAT = 50;
 const MIN_EQ = -12;
 const MAX_EQ = 12;
-const DDC_DEBOUNCE_MS = 220;
+const MIN_SPATIAL = 0;
+const MAX_SPATIAL = 100;
 const EQ_DEBOUNCE_MS = 40;
 const EQ_NODE_NAME = 'sstuner.eq';
-const SOFTWARE_BOOST_PER_PCT = 0.0075; // 180% → +0.60
-const CONTRAST_GAIN = 0.5 / MAX_CONTRAST;
-const TEMP_RED = 0.34 / MAX_TEMP;
-const TEMP_GREEN = 0.12 / MAX_TEMP;
-const TEMP_BLUE = 0.36 / MAX_TEMP;
-const SAT_GAIN = 1.0 / MAX_SAT; // −50 → szary, +50 → 2×
-
-const SAT_SHADER = `
-uniform sampler2D tex;
-uniform float factor;
-
-void main() {
-    vec4 color = texture2D(tex, cogl_tex_coord_in[0].st);
-    float a = max(color.a, 1e-5);
-    vec3 rgb = color.rgb / a;
-    float gray = dot(rgb, vec3(0.2126, 0.7152, 0.0722));
-    rgb = clamp(mix(vec3(gray), rgb, factor), 0.0, 1.0);
-    cogl_color_out = vec4(rgb * color.a, color.a);
-}
-`;
+const SPATIAL_NODE_NAME = 'sstuner.spatial';
+const SPATIAL_WET = 0.35;
+const SPATIAL_DELAY_L = 0.011;
+const SPATIAL_DELAY_R = 0.016;
 
 function clamp(value, min, max) {
     return Math.min(max, Math.max(min, Math.round(Number(value) || 0)));
 }
 
-function clampPercent(value) {
-    return clamp(value, MIN_PCT, MAX_PCT);
-}
-
-function clampContrast(value) {
-    return clamp(value, MIN_CONTRAST, MAX_CONTRAST);
-}
-
-function clampTemp(value) {
-    return clamp(value, MIN_TEMP, MAX_TEMP);
-}
-
-function clampSat(value) {
-    return clamp(value, MIN_SAT, MAX_SAT);
-}
-
 function clampEq(value) {
     return clamp(value, MIN_EQ, MAX_EQ);
+}
+
+function clampSpatial(value) {
+    return clamp(value, MIN_SPATIAL, MAX_SPATIAL);
+}
+
+function spatialParams(amount) {
+    const t = clampSpatial(amount) / MAX_SPATIAL;
+    return {
+        wet: t * SPATIAL_WET,
+        delayL: t * SPATIAL_DELAY_L,
+        delayR: t * SPATIAL_DELAY_R,
+    };
 }
 
 function sliderFromRange(value, min, max) {
@@ -160,262 +131,51 @@ function spawnQuiet(argv) {
     }
 }
 
-function findEqNodeId() {
-    const out = spawnCapture(['pw-cli', 'i', EQ_NODE_NAME]);
+function findNodeId(name) {
+    const out = spawnCapture(['pw-cli', 'i', name]);
     const match = out.match(/^\s*id:\s*(\d+)/m);
     return match ? Number(match[1]) : 0;
 }
 
-const SaturationEffect = GObject.registerClass(
-class SaturationEffect extends Clutter.ShaderEffect {
-    _init() {
-        super._init();
-        this._factor = 1;
-        this.set_shader_source(SAT_SHADER);
-        this.set_uniform_value('factor', 1.0 - 1e-6);
+function stripLegacyPictureEffects() {
+    const names = ['sstuner', 'sstuner-sat'];
+    const actors = [];
+    try {
+        if (global.window_group)
+            actors.push(global.window_group);
+        for (const actor of global.get_window_actors())
+            actors.push(actor);
+    } catch {
+        // compositor not ready
     }
-
-    set_factor(value) {
-        const next = Math.clamp(Number(value) || 0, 0, 2.5);
-        if (Math.abs(this._factor - next) < 1e-4)
-            return;
-        this._factor = next;
-        this.set_uniform_value('factor', parseFloat(next - 1e-6));
-    }
-});
-
-class PictureController {
-    constructor(settings) {
-        this._settings = settings;
-        this._ddcutil = findDdcutil();
-        this._bus = null;
-        this._ddcReady = false;
-        this._ddcTimeout = 0;
-        this._effects = [];
-        this._satEffects = [];
-        this._targets = [];
-        this._settingIds = ['percent', 'contrast', 'temperature', 'saturation', 'use-ddc'].map(key =>
-            this._settings.connect(`changed::${key}`, () => {
-                if (key === 'use-ddc')
-                    this._probeDdc();
-                this.apply();
-            }));
-        this._probeDdc();
-    }
-
-    get percent() {
-        return clampPercent(this._settings.get_int('percent'));
-    }
-
-    get contrast() {
-        return clampContrast(this._settings.get_int('contrast'));
-    }
-
-    get temperature() {
-        return clampTemp(this._settings.get_int('temperature'));
-    }
-
-    get saturation() {
-        return clampSat(this._settings.get_int('saturation'));
-    }
-
-    setPercent(percent) {
-        const next = clampPercent(percent);
-        if (next === this.percent)
-            this.apply();
-        else
-            this._settings.set_int('percent', next);
-    }
-
-    setContrast(value) {
-        const next = clampContrast(value);
-        if (next === this.contrast)
-            this.apply();
-        else
-            this._settings.set_int('contrast', next);
-    }
-
-    setTemperature(value) {
-        const next = clampTemp(value);
-        if (next === this.temperature)
-            this.apply();
-        else
-            this._settings.set_int('temperature', next);
-    }
-
-    setSaturation(value) {
-        const next = clampSat(value);
-        if (next === this.saturation)
-            this.apply();
-        else
-            this._settings.set_int('saturation', next);
-    }
-
-    nudge(delta) {
-        this.setPercent(this.percent + delta);
-    }
-
-    resetAll() {
-        this._settings.set_int('percent', 100);
-        this._settings.set_int('contrast', 0);
-        this._settings.set_int('temperature', 0);
-        this._settings.set_int('saturation', 0);
-    }
-
-    snapshot() {
-        return {
-            percent: this.percent,
-            contrast: this.contrast,
-            temperature: this.temperature,
-            saturation: this.saturation,
-        };
-    }
-
-    applyPreset(preset) {
-        this._settings.set_int('percent', clampPercent(preset.percent));
-        this._settings.set_int('contrast', clampContrast(preset.contrast));
-        this._settings.set_int('temperature', clampTemp(preset.temperature));
-        this._settings.set_int('saturation', clampSat(preset.saturation ?? 0));
-    }
-
-    apply() {
-        const percent = this.percent;
-        const contrast = this.contrast;
-        const temperature = this.temperature;
-        const saturation = this.saturation;
-        const useDdc = this._settings.get_boolean('use-ddc') && this._ddcReady;
-        let ddcValue = 100;
-        let software = 0;
-
-        if (percent <= 100) {
-            ddcValue = percent;
-            software = useDdc ? 0 : (percent - 100) / 100;
-        } else {
-            ddcValue = 100;
-            software = (percent - 100) * SOFTWARE_BOOST_PER_PCT;
-        }
-
-        this._setSoftware(software, contrast * CONTRAST_GAIN, temperature, saturation);
-        if (useDdc)
-            this._queueDdc(ddcValue);
-    }
-
-    destroy() {
-        for (const id of this._settingIds)
-            this._settings.disconnect(id);
-        this._settingIds = [];
-        if (this._ddcTimeout) {
-            GLib.source_remove(this._ddcTimeout);
-            this._ddcTimeout = 0;
-        }
-        this._clearEffects();
-    }
-
-    _probeDdc() {
-        this._ddcReady = false;
-        this._bus = null;
-        if (!this._ddcutil || !this._settings.get_boolean('use-ddc'))
-            return;
-
-        const out = spawnCapture([this._ddcutil, 'detect', '--brief']);
-        const match = out.match(/I2C bus:\s*\/dev\/i2c-(\d+)/i);
-        if (!match)
-            return;
-        this._bus = match[1];
-        this._ddcReady = true;
-    }
-
-    _queueDdc(value) {
-        if (this._ddcTimeout)
-            GLib.source_remove(this._ddcTimeout);
-        this._ddcTimeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, DDC_DEBOUNCE_MS, () => {
-            this._ddcTimeout = 0;
-            this._setDdc(value);
-            return GLib.SOURCE_REMOVE;
-        });
-    }
-
-    _setDdc(value) {
-        if (!this._ddcutil || this._bus === null)
-            return;
-        spawnQuiet([
-            this._ddcutil, 'setvcp', '10', String(value),
-            '--bus', String(this._bus),
-            '--noverify',
-        ]);
-    }
-
-    _setSoftware(brightness, contrast, temperature, saturation) {
-        const idle =
-            Math.abs(brightness) < 0.005 &&
-            Math.abs(contrast) < 0.005 &&
-            Math.abs(temperature) < 1 &&
-            Math.abs(saturation) < 1;
-        if (idle) {
-            this._clearEffects();
-            return;
-        }
-        this._ensureEffects();
-
-        const r = Math.clamp(brightness + temperature * TEMP_RED, -1, 1);
-        const g = Math.clamp(brightness + temperature * TEMP_GREEN, -1, 1);
-        const b = Math.clamp(brightness - temperature * TEMP_BLUE, -1, 1);
-        const satFactor = Math.clamp(1 + saturation * SAT_GAIN, 0, 2.5);
-
-        for (const effect of this._effects) {
-            if (typeof effect.set_brightness_full === 'function')
-                effect.set_brightness_full(r, g, b);
-            else
-                effect.set_brightness(brightness);
-            effect.set_contrast(contrast);
-        }
-        for (const effect of this._satEffects)
-            effect.set_factor(satFactor);
-    }
-
-    _ensureEffects() {
-        if (this._effects.length)
-            return;
-
-        // Only the window group: panel / dock keep their own effects
-        // (blur-my-shell, dash-to-dock) and fullscreen games can unredirect.
-        const targets = [global.window_group];
-
-        for (const actor of targets) {
-            if (!actor)
-                continue;
-            for (const name of ['sstuner', 'sstuner-sat']) {
+    for (const actor of actors) {
+        try {
+            for (const name of names) {
                 const existing = actor.get_effect(name);
                 if (existing)
                     actor.remove_effect(existing);
             }
-            const effect = new Clutter.BrightnessContrastEffect();
-            actor.add_effect_with_name('sstuner', effect);
-            const sat = new SaturationEffect();
-            actor.add_effect_with_name('sstuner-sat', sat);
-            this._effects.push(effect);
-            this._satEffects.push(sat);
-            this._targets.push(actor);
+        } catch {
+            // actor gone
         }
-    }
-
-    _clearEffects() {
-        for (const actor of this._targets) {
-            try {
-                for (const name of ['sstuner', 'sstuner-sat']) {
-                    const effect = actor.get_effect(name);
-                    if (effect)
-                        actor.remove_effect(effect);
-                }
-            } catch {
-                // actor may already be gone during teardown
-            }
-        }
-        this._effects = [];
-        this._satEffects = [];
-        this._targets = [];
     }
 }
+
+function restoreMonitorBacklight() {
+    const ddcutil = findDdcutil();
+    if (!ddcutil)
+        return;
+    const out = spawnCapture([ddcutil, 'detect', '--brief']);
+    const match = out.match(/I2C bus:\s*\/dev\/i2c-(\d+)/i);
+    if (!match)
+        return;
+    spawnQuiet([
+        ddcutil, 'setvcp', '10', '100',
+        '--bus', match[1],
+        '--noverify',
+    ]);
+}
+
 
 class EqController {
     constructor(settings, extPath) {
@@ -423,12 +183,13 @@ class EqController {
         this._extPath = extPath;
         this._proc = null;
         this._nodeId = 0;
+        this._spatialId = 0;
         this._timeout = 0;
         this._waitId = 0;
         this._retryId = 0;
         this._retries = 0;
         this._starting = false;
-        this._settingIds = ['eq-bass', 'eq-mid', 'eq-treble'].map(key =>
+        this._settingIds = ['eq-bass', 'eq-mid', 'eq-treble', 'eq-spatial'].map(key =>
             this._settings.connect(`changed::${key}`, () => this.apply()));
     }
 
@@ -442,6 +203,10 @@ class EqController {
 
     get treble() {
         return clampEq(this._settings.get_int('eq-treble'));
+    }
+
+    get spatial() {
+        return clampSpatial(this._settings.get_int('eq-spatial'));
     }
 
     setBass(value) {
@@ -468,10 +233,19 @@ class EqController {
             this._settings.set_int('eq-treble', next);
     }
 
+    setSpatial(value) {
+        const next = clampSpatial(value);
+        if (next === this.spatial)
+            this.apply();
+        else
+            this._settings.set_int('eq-spatial', next);
+    }
+
     resetAll() {
         this._settings.set_int('eq-bass', 0);
         this._settings.set_int('eq-mid', 0);
         this._settings.set_int('eq-treble', 0);
+        this._settings.set_int('eq-spatial', 0);
     }
 
     snapshot() {
@@ -479,6 +253,7 @@ class EqController {
             bass: this.bass,
             mid: this.mid,
             treble: this.treble,
+            spatial: this.spatial,
         };
     }
 
@@ -486,10 +261,12 @@ class EqController {
         this._settings.set_int('eq-bass', clampEq(preset.bass));
         this._settings.set_int('eq-mid', clampEq(preset.mid));
         this._settings.set_int('eq-treble', clampEq(preset.treble));
+        this._settings.set_int('eq-spatial', clampSpatial(preset.spatial ?? 0));
     }
 
     start() {
-        this._nodeId = findEqNodeId();
+        this._nodeId = findNodeId(EQ_NODE_NAME);
+        this._spatialId = findNodeId(SPATIAL_NODE_NAME);
         if (this._nodeId) {
             this._sendGains();
             return;
@@ -519,7 +296,8 @@ class EqController {
         this._starting = true;
         let tries = 0;
         this._waitId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 150, () => {
-            this._nodeId = findEqNodeId();
+            this._nodeId = findNodeId(EQ_NODE_NAME);
+            this._spatialId = findNodeId(SPATIAL_NODE_NAME);
             if (this._nodeId) {
                 this._starting = false;
                 this._retries = 0;
@@ -548,14 +326,20 @@ class EqController {
     }
 
     _sendGains() {
-        if (!this._nodeId)
-            return;
-        const args = `{ params = [ "bass:Gain" ${spaFloat(this.bass)} "mid:Gain" ${spaFloat(this.mid)} "treble:Gain" ${spaFloat(this.treble)} ] }`;
-        spawnQuiet(['pw-cli', 's', String(this._nodeId), 'Props', args]);
+        if (this._nodeId) {
+            const args = `{ params = [ "bass:Gain" ${spaFloat(this.bass)} "mid:Gain" ${spaFloat(this.mid)} "treble:Gain" ${spaFloat(this.treble)} ] }`;
+            spawnQuiet(['pw-cli', 's', String(this._nodeId), 'Props', args]);
+        }
+        if (this._spatialId) {
+            const p = spatialParams(this.spatial);
+            const args = `{ params = [ "mixL:Gain 2" ${spaFloat(p.wet)} "mixR:Gain 2" ${spaFloat(p.wet)} "delayL:Delay (s)" ${spaFloat(p.delayL)} "delayR:Delay (s)" ${spaFloat(p.delayR)} ] }`;
+            spawnQuiet(['pw-cli', 's', String(this._spatialId), 'Props', args]);
+        }
     }
 
     _flush() {
-        this._nodeId = findEqNodeId();
+        this._nodeId = findNodeId(EQ_NODE_NAME);
+        this._spatialId = findNodeId(SPATIAL_NODE_NAME);
         if (!this._nodeId) {
             this.start();
             return;
@@ -605,6 +389,7 @@ class EqController {
             this._proc = null;
         }
         this._nodeId = 0;
+        this._spatialId = 0;
     }
 
     destroy() {
@@ -1306,104 +1091,6 @@ class AdjustPanel extends QuickSettingsItem {
         });
         this.set_child(box);
 
-        this._pictureFold = new FoldSection({
-            title: 'Obraz',
-            settings: extension.settings,
-            key: 'picture-expanded',
-            summary: () => this._pictureHint(),
-        });
-        box.add_child(this._pictureFold);
-
-        const bright = buildScale(MIN_PCT, MAX_PCT,
-            [10, 20, 40, 60, 80, 100, 120, 140, 160, 180]);
-        this._brightness = new ScaleRow({
-            iconName: 'display-brightness-symbolic',
-            iconLabel: 'Przywróć jasność 100%',
-            accessibleName: 'Jasność ekranu',
-            marks: bright.marks,
-            min: MIN_PCT,
-            max: MAX_PCT,
-            onChange: value => extension.controller?.setPercent(
-                valueFromSlider(value, MIN_PCT, MAX_PCT)),
-            onReset: () => extension.controller?.setPercent(100),
-        });
-        this._pictureFold.body.add_child(this._brightness);
-
-        const contrast = buildScale(MIN_CONTRAST, MAX_CONTRAST,
-            [-50, -30, -10, 0, 10, 30, 50]);
-        this._contrast = new ScaleRow({
-            iconName: 'colorimeter-colorhug-symbolic',
-            iconLabel: 'Przywróć kontrast 0',
-            accessibleName: 'Kontrast obrazu',
-            marks: contrast.marks,
-            min: MIN_CONTRAST,
-            max: MAX_CONTRAST,
-            onChange: value => extension.controller?.setContrast(
-                valueFromSlider(value, MIN_CONTRAST, MAX_CONTRAST)),
-            onReset: () => extension.controller?.setContrast(0),
-        });
-        this._pictureFold.body.add_child(this._contrast);
-
-        const temp = buildScale(MIN_TEMP, MAX_TEMP,
-            [-100, -60, -20, 0, 20, 60, 100]);
-        this._temperature = new ScaleRow({
-            iconName: 'night-light-symbolic',
-            iconLabel: 'Przywróć temperaturę 0',
-            accessibleName: 'Temperatura barw',
-            marks: temp.marks.map(mark => {
-                if (mark.pos === 0)
-                    return {...mark, label: 'zimny'};
-                if (mark.pos === 1)
-                    return {...mark, label: 'ciepły'};
-                return mark;
-            }),
-            min: MIN_TEMP,
-            max: MAX_TEMP,
-            onChange: value => extension.controller?.setTemperature(
-                valueFromSlider(value, MIN_TEMP, MAX_TEMP)),
-            onReset: () => extension.controller?.setTemperature(0),
-        });
-        this._pictureFold.body.add_child(this._temperature);
-
-        const sat = buildScale(MIN_SAT, MAX_SAT,
-            [-50, -30, -10, 0, 10, 30, 50]);
-        this._saturation = new ScaleRow({
-            iconName: 'color-select-symbolic',
-            iconLabel: 'Przywróć nasycenie 0',
-            accessibleName: 'Nasycenie kolorów',
-            marks: sat.marks.map(mark => {
-                if (mark.pos === 0)
-                    return {...mark, label: 'szary'};
-                if (mark.pos === 1)
-                    return {...mark, label: 'żywy'};
-                return mark;
-            }),
-            min: MIN_SAT,
-            max: MAX_SAT,
-            onChange: value => extension.controller?.setSaturation(
-                valueFromSlider(value, MIN_SAT, MAX_SAT)),
-            onReset: () => extension.controller?.setSaturation(0),
-        });
-        this._pictureFold.body.add_child(this._saturation);
-
-        this._picturePresets = new PresetBar({
-            settings: extension.settings,
-            listKey: 'picture-presets',
-            activeKey: 'picture-preset-active',
-            kind: 'picture',
-            namePrefix: 'Obraz',
-            snapshot: () => extension.controller?.snapshot() ?? {
-                percent: 100, contrast: 0, temperature: 0, saturation: 0,
-            },
-            applyPreset: preset => extension.controller?.applyPreset(preset),
-        });
-        this._pictureFold.body.add_child(this._picturePresets);
-
-        box.add_child(new St.Widget({
-            style_class: 'sstuner-sep',
-            x_expand: true,
-        }));
-
         this._soundFold = new FoldSection({
             title: 'Dźwięk',
             settings: extension.settings,
@@ -1445,7 +1132,7 @@ class AdjustPanel extends QuickSettingsItem {
         this._soundFold.body.add_child(this._eqMid);
 
         this._eqTreble = new ScaleRow({
-            iconName: 'audio-headphones-symbolic',
+            iconName: 'audio-volume-high-symbolic',
             iconLabel: 'Przywróć sopran 0 dB',
             accessibleName: 'Equalizer sopran',
             marks: eqMarks,
@@ -1457,6 +1144,24 @@ class AdjustPanel extends QuickSettingsItem {
         });
         this._soundFold.body.add_child(this._eqTreble);
 
+        const spatial = buildScale(MIN_SPATIAL, MAX_SPATIAL, [0, 25, 50, 75, 100]);
+        this._eqSpatial = new ScaleRow({
+            iconName: 'audio-headphones-symbolic',
+            iconLabel: 'Przywróć przestrzeń 0%',
+            accessibleName: 'Dźwięk przestrzenny',
+            marks: spatial.marks.map(mark => {
+                if (mark.pos === 0)
+                    return {...mark, label: 'off'};
+                return mark;
+            }),
+            min: MIN_SPATIAL,
+            max: MAX_SPATIAL,
+            onChange: value => extension.eq?.setSpatial(
+                valueFromSlider(value, MIN_SPATIAL, MAX_SPATIAL)),
+            onReset: () => extension.eq?.setSpatial(0),
+        });
+        this._soundFold.body.add_child(this._eqSpatial);
+
         this._soundPresets = new PresetBar({
             settings: extension.settings,
             listKey: 'sound-presets',
@@ -1464,13 +1169,13 @@ class AdjustPanel extends QuickSettingsItem {
             kind: 'sound',
             namePrefix: 'Dźwięk',
             snapshot: () => extension.eq?.snapshot() ?? {
-                bass: 0, mid: 0, treble: 0,
+                bass: 0, mid: 0, treble: 0, spatial: 0,
             },
             applyPreset: preset => extension.eq?.applyPreset(preset),
         });
         this._soundFold.body.add_child(this._soundPresets);
 
-        const keys = ['percent', 'contrast', 'temperature', 'saturation', 'eq-bass', 'eq-mid', 'eq-treble'];
+        const keys = ['eq-bass', 'eq-mid', 'eq-treble', 'eq-spatial'];
         this._ids = keys.map(key =>
             extension.settings.connect(`changed::${key}`, () => this._sync()));
         this.connect('destroy', () => {
@@ -1482,36 +1187,7 @@ class AdjustPanel extends QuickSettingsItem {
     }
 
     _sync() {
-        const ctl = this._extension.controller;
         const eq = this._extension.eq;
-        if (!ctl)
-            return;
-        const percent = ctl.percent;
-        const contrast = ctl.contrast;
-        const temperature = ctl.temperature;
-        const saturation = ctl.saturation;
-        const offset = percent - 100;
-        const brightLabel = offset === 0
-            ? '100%'
-            : `${percent}% ${formatSigned(offset)}`;
-
-        this._brightness.setState(
-            sliderFromRange(percent, MIN_PCT, MAX_PCT),
-            brightLabel,
-            percent !== 100);
-        this._contrast.setState(
-            sliderFromRange(contrast, MIN_CONTRAST, MAX_CONTRAST),
-            formatSigned(contrast),
-            contrast !== 0);
-        this._temperature.setState(
-            sliderFromRange(temperature, MIN_TEMP, MAX_TEMP),
-            formatSigned(temperature),
-            temperature !== 0);
-        this._saturation.setState(
-            sliderFromRange(saturation, MIN_SAT, MAX_SAT),
-            formatSigned(saturation),
-            saturation !== 0);
-
         if (!eq)
             return;
         this._eqBass.setState(
@@ -1526,25 +1202,20 @@ class AdjustPanel extends QuickSettingsItem {
             sliderFromRange(eq.treble, MIN_EQ, MAX_EQ),
             `${formatSigned(eq.treble)} dB`,
             eq.treble !== 0);
+        this._eqSpatial.setState(
+            sliderFromRange(eq.spatial, MIN_SPATIAL, MAX_SPATIAL),
+            `${eq.spatial}%`,
+            eq.spatial !== 0);
 
-        this._picturePresets?.refreshActive();
         this._soundPresets?.refreshActive();
-        this._pictureFold?.refreshHint();
         this._soundFold?.refreshHint();
-    }
-
-    _pictureHint() {
-        const ctl = this._extension.controller;
-        if (!ctl)
-            return '';
-        return `${ctl.percent}%  ·  ${formatSigned(ctl.contrast)}  ·  ${formatSigned(ctl.temperature)}  ·  ${formatSigned(ctl.saturation)}`;
     }
 
     _soundHint() {
         const eq = this._extension.eq;
         if (!eq)
             return '';
-        return `${formatSigned(eq.bass)} / ${formatSigned(eq.mid)} / ${formatSigned(eq.treble)} dB`;
+        return `${formatSigned(eq.bass)} / ${formatSigned(eq.mid)} / ${formatSigned(eq.treble)} dB  ·  ${eq.spatial}%`;
     }
 });
 
@@ -1559,44 +1230,26 @@ class Indicator extends SystemIndicator {
 export default class SstunerExtension extends Extension {
     enable() {
         this.settings = this.getSettings();
-        this.controller = new PictureController(this.settings);
-        this.controller.apply();
+        stripLegacyPictureEffects();
+        this.settings.set_int('percent', 100);
+        this.settings.set_int('contrast', 0);
+        this.settings.set_int('saturation', 0);
+        restoreMonitorBacklight();
 
         this.eq = new EqController(this.settings, this.path);
         this.eq.start();
 
         this._indicator = new Indicator(this);
         Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator, 2);
-
-        Main.wm.addKeybinding(
-            'brightness-up',
-            this.settings,
-            Meta.KeyBindingFlags.IGNORE_AUTOREPEAT,
-            Shell.ActionMode.ALL,
-            () => this.controller.nudge(STEP)
-        );
-        Main.wm.addKeybinding(
-            'brightness-down',
-            this.settings,
-            Meta.KeyBindingFlags.IGNORE_AUTOREPEAT,
-            Shell.ActionMode.ALL,
-            () => this.controller.nudge(-STEP)
-        );
     }
 
     disable() {
-        Main.wm.removeKeybinding('brightness-up');
-        Main.wm.removeKeybinding('brightness-down');
-
         this._indicator?.quickSettingsItems.forEach(item => item.destroy());
         this._indicator?.destroy();
         this._indicator = null;
 
         this.eq?.destroy();
         this.eq = null;
-
-        this.controller?.destroy();
-        this.controller = null;
         this.settings = null;
     }
 }

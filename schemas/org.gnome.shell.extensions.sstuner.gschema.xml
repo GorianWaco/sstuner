@@ -4,25 +4,19 @@
           path="/org/gnome/shell/extensions/sstuner/">
     <key name="percent" type="i">
       <default>100</default>
-      <range min="10" max="180"/>
+      <range min="55" max="140"/>
       <summary>Brightness</summary>
-      <description>10–100: podświetlenie monitora (DDC). Powyżej 100: boost programowy.</description>
+      <description>55–100: podświetlenie monitora (DDC). Powyżej 100: boost programowy.</description>
     </key>
     <key name="contrast" type="i">
       <default>0</default>
-      <range min="-50" max="50"/>
+      <range min="-25" max="25"/>
       <summary>Kontrast</summary>
       <description>Korekcja kontrastu obrazu. 0 = bez zmian, ujemne ściemnia różnice, dodatnie je wzmacnia.</description>
     </key>
-    <key name="temperature" type="i">
-      <default>0</default>
-      <range min="-100" max="100"/>
-      <summary>Temperatura barw</summary>
-      <description>Ujemne = zimny (niebieski), 0 = neutralny, dodatnie = ciepły (bursztynowy).</description>
-    </key>
     <key name="saturation" type="i">
       <default>0</default>
-      <range min="-50" max="50"/>
+      <range min="-25" max="25"/>
       <summary>Nasycenie</summary>
       <description>Korekcja nasycenia kolorów. 0 = bez zmian, ujemne szarzeje, dodatnie ożywia barwy.</description>
     </key>
@@ -44,15 +38,21 @@
       <summary>Equalizer: sopran</summary>
       <description>Wzmocnienie wysokich tonów w dB. 0 = bez zmian.</description>
     </key>
+    <key name="eq-spatial" type="i">
+      <default>0</default>
+      <range min="0" max="100"/>
+      <summary>Dźwięk przestrzenny</summary>
+      <description>Szerokość sceny stereo. 0 = bez zmian, 100 = maksymalna przestrzeń. Działa też w grach (PipeWire).</description>
+    </key>
     <key name="picture-presets" type="s">
-      <default>'[{"id":"neutral","name":"Neutralny","percent":100,"contrast":0,"temperature":0,"saturation":0},{"id":"night","name":"Noc","percent":55,"contrast":-6,"temperature":28,"saturation":0},{"id":"day","name":"Dzień","percent":120,"contrast":4,"temperature":-12,"saturation":0}]'</default>
+      <default>'[{"id":"neutral","name":"Neutralny","percent":100,"contrast":0,"saturation":0},{"id":"night","name":"Noc","percent":55,"contrast":-6,"saturation":0},{"id":"day","name":"Dzień","percent":120,"contrast":4,"saturation":0}]'</default>
       <summary>Presety obrazu</summary>
-      <description>JSON z presetami jasności, kontrastu, temperatury i nasycenia.</description>
+      <description>JSON z presetami jasności, kontrastu i nasycenia.</description>
     </key>
     <key name="sound-presets" type="s">
-      <default>'[{"id":"flat","name":"Płaski","bass":0,"mid":0,"treble":0},{"id":"bass","name":"Bas","bass":7,"mid":-1,"treble":-2},{"id":"voice","name":"Głos","bass":-3,"mid":5,"treble":3},{"id":"bright","name":"Jasny","bass":-2,"mid":1,"treble":6}]'</default>
+      <default>'[{"id":"flat","name":"Płaski","bass":0,"mid":0,"treble":0,"spatial":0},{"id":"bass","name":"Bas","bass":7,"mid":-1,"treble":-2,"spatial":0},{"id":"voice","name":"Głos","bass":-3,"mid":5,"treble":3,"spatial":15},{"id":"bright","name":"Jasny","bass":-2,"mid":1,"treble":6,"spatial":25},{"id":"spatial","name":"Przestrzeń","bass":1,"mid":0,"treble":2,"spatial":60}]'</default>
       <summary>Presety dźwięku</summary>
-      <description>JSON z presetami equalizera.</description>
+      <description>JSON z presetami equalizera i dźwięku przestrzennego.</description>
     </key>
     <key name="picture-preset-active" type="s">
       <default>''</default>

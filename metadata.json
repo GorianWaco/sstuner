@@ -1,9 +1,9 @@
 {
   "uuid": "sstuner@gorianwaco.github.io",
   "name": "SSTuner",
-  "description": "Picture and sound controls in GNOME Quick Settings.\n\nAdjust brightness, contrast, color temperature and saturation, plus a 3-band equalizer. Picture and sound have separate presets. Sliders move in 1-point steps. Sections start collapsed.\n\nOptional dependencies:\n* ddcutil — monitor backlight via DDC/CI (10–100%)\n* PipeWire and pw-cli — equalizer",
+  "description": "Sound controls in GNOME Quick Settings.\n\n3-band equalizer (bass / mid / treble) and spatial stereo. Presets, 1-point sliders, collapsed by default.\n\nOptional dependencies:\n* PipeWire and pw-cli — equalizer and spatial sound",
   "shell-version": ["45", "46", "47", "48", "49", "50"],
   "settings-schema": "org.gnome.shell.extensions.sstuner",
   "url": "https://github.com/GorianWaco/sstuner",
-  "version-name": "1.0"
+  "version-name": "1.2"
 }

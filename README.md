@@ -1,21 +1,19 @@
 # SSTuner
 
-GNOME Shell extension for picture and sound controls in Quick Settings.
+GNOME Shell extension for sound controls in Quick Settings.
 
-- Brightness (DDC/CI 10–100%, software boost above 100%)
-- Contrast, color temperature, saturation
 - 3-band equalizer (bass / mid / treble) via PipeWire
-- Separate picture and sound presets
-- Foldable **Picture** and **Sound** sections (collapsed by default)
+- Spatial stereo (width / Haas) via PipeWire — works in games too
+- Sound presets
+- Foldable **Sound** section (collapsed by default)
 
 Requires GNOME Shell 45–50.
 
 ## Optional dependencies
 
-- `ddcutil` — hardware monitor backlight
-- `pipewire` and `pw-cli` — equalizer
+- `pipewire` and `pw-cli` — equalizer and spatial sound
 
-Arch: `sudo pacman -S ddcutil pipewire pipewire-audio`
+Arch: `sudo pacman -S pipewire pipewire-audio`
 
 ## Install from ZIP
 

@@ -6,7 +6,6 @@ import Gtk from 'gi://Gtk';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/prefs.js';
 import {
     MAX_PRESETS,
-    PICTURE_FACTORY,
     SOUND_FACTORY,
     newPresetId,
     nextDefaultName,
@@ -15,98 +14,19 @@ import {
     serializePresets,
 } from './presets.js';
 
-function formatPicture(preset) {
-    return `Jasność ${preset.percent}%, kontrast ${preset.contrast}, temp. ${preset.temperature}, nasyc. ${preset.saturation}`;
-}
-
 function formatSound(preset) {
     const sign = v => (v > 0 ? `+${v}` : String(v));
-    return `Bas ${sign(preset.bass)} dB, średnie ${sign(preset.mid)} dB, sopran ${sign(preset.treble)} dB`;
+    return `Bas ${sign(preset.bass)} dB, średnie ${sign(preset.mid)} dB, sopran ${sign(preset.treble)} dB, przestrzeń ${preset.spatial ?? 0}%`;
 }
 
 export default class SstunerPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const settings = this.getSettings();
-        const page = new Adw.PreferencesPage({title: 'Obraz i dźwięk'});
-
-        const behave = new Adw.PreferencesGroup({
-            title: 'Jasność',
-            description: '10–100% to podświetlenie monitora (DDC). Powyżej 100% obraz jest rozjaśniany programowo. Kliknięcie ikony suwaka przywraca wartość zerową.',
-        });
-
-        const ddc = new Adw.SwitchRow({
-            title: 'Steruj monitorem przez DDC/CI',
-            subtitle: 'Wymaga ddcutil. Wyłącz, jeśli chcesz tylko korekcję programową.',
-        });
-        settings.bind('use-ddc', ddc, 'active', Gio.SettingsBindFlags.DEFAULT);
-        behave.add(ddc);
-
-        const percent = new Adw.SpinRow({
-            title: 'Jasność po starcie',
-            subtitle: '100 = bez zmian. Mniej = ciemniej, więcej = jaśniej.',
-            adjustment: new Gtk.Adjustment({
-                lower: 10,
-                upper: 180,
-                step_increment: 1,
-                page_increment: 10,
-                value: settings.get_int('percent'),
-            }),
-        });
-        settings.bind('percent', percent, 'value', Gio.SettingsBindFlags.DEFAULT);
-        behave.add(percent);
-        page.add(behave);
-
-        const picture = new Adw.PreferencesGroup({
-            title: 'Korekcja obrazu',
-            description: 'Kontrast, temperatura i nasycenie działają zawsze programowo, niezależnie od DDC.',
-        });
-
-        const contrast = new Adw.SpinRow({
-            title: 'Kontrast po starcie',
-            subtitle: '0 = bez zmian. Ujemne spłaszcza, dodatnie wzmacnia.',
-            adjustment: new Gtk.Adjustment({
-                lower: -50,
-                upper: 50,
-                step_increment: 1,
-                page_increment: 5,
-                value: settings.get_int('contrast'),
-            }),
-        });
-        settings.bind('contrast', contrast, 'value', Gio.SettingsBindFlags.DEFAULT);
-        picture.add(contrast);
-
-        const temperature = new Adw.SpinRow({
-            title: 'Temperatura po starcie',
-            subtitle: 'Ujemne = zimny (niebieski), 0 = neutralny, dodatnie = ciepły.',
-            adjustment: new Gtk.Adjustment({
-                lower: -100,
-                upper: 100,
-                step_increment: 1,
-                page_increment: 10,
-                value: settings.get_int('temperature'),
-            }),
-        });
-        settings.bind('temperature', temperature, 'value', Gio.SettingsBindFlags.DEFAULT);
-        picture.add(temperature);
-
-        const saturation = new Adw.SpinRow({
-            title: 'Nasycenie po starcie',
-            subtitle: 'Ujemne = szary, 0 = bez zmian, dodatnie = żywsze kolory.',
-            adjustment: new Gtk.Adjustment({
-                lower: -50,
-                upper: 50,
-                step_increment: 1,
-                page_increment: 5,
-                value: settings.get_int('saturation'),
-            }),
-        });
-        settings.bind('saturation', saturation, 'value', Gio.SettingsBindFlags.DEFAULT);
-        picture.add(saturation);
-        page.add(picture);
+        const page = new Adw.PreferencesPage({title: 'Dźwięk'});
 
         const sound = new Adw.PreferencesGroup({
-            title: 'Equalizer',
-            description: 'Trzy pasma przez PipeWire. 0 dB = bez zmian. Wartości wracają po zalogowaniu.',
+            title: 'Dźwięk',
+            description: 'Equalizer i przestrzeń przez PipeWire. 0 = bez zmian. Wartości wracają po zalogowaniu.',
         });
 
         for (const [key, title, subtitle] of [
@@ -128,28 +48,25 @@ export default class SstunerPreferences extends ExtensionPreferences {
             settings.bind(key, row, 'value', Gio.SettingsBindFlags.DEFAULT);
             sound.add(row);
         }
+
+        const spatial = new Adw.SpinRow({
+            title: 'Przestrzeń po starcie',
+            subtitle: '0 = stereo bez zmian, 100 = najszersza scena. Działa też w grach.',
+            adjustment: new Gtk.Adjustment({
+                lower: 0,
+                upper: 100,
+                step_increment: 1,
+                page_increment: 10,
+                value: settings.get_int('eq-spatial'),
+            }),
+        });
+        settings.bind('eq-spatial', spatial, 'value', Gio.SettingsBindFlags.DEFAULT);
+        sound.add(spatial);
         page.add(sound);
 
         this._addPresetGroup(page, settings, {
-            title: 'Presety obrazu',
-            description: 'Osobne od dźwięku. W panelu: klik = wczytaj, + = zapisz, prawy przycisk = nadpisz / zmień nazwę / usuń.',
-            listKey: 'picture-presets',
-            activeKey: 'picture-preset-active',
-            kind: 'picture',
-            namePrefix: 'Obraz',
-            factory: PICTURE_FACTORY,
-            format: formatPicture,
-            snapshot: () => ({
-                percent: settings.get_int('percent'),
-                contrast: settings.get_int('contrast'),
-                temperature: settings.get_int('temperature'),
-                saturation: settings.get_int('saturation'),
-            }),
-        });
-
-        this._addPresetGroup(page, settings, {
             title: 'Presety dźwięku',
-            description: 'Osobne od obrazu. Bas / średnie / sopran.',
+            description: 'Klik = wczytaj, + = zapisz. Bas / średnie / sopran / przestrzeń.',
             listKey: 'sound-presets',
             activeKey: 'sound-preset-active',
             kind: 'sound',
@@ -160,13 +77,14 @@ export default class SstunerPreferences extends ExtensionPreferences {
                 bass: settings.get_int('eq-bass'),
                 mid: settings.get_int('eq-mid'),
                 treble: settings.get_int('eq-treble'),
+                spatial: settings.get_int('eq-spatial'),
             }),
         });
 
         const reset = new Adw.PreferencesGroup();
         const resetRow = new Adw.ActionRow({
             title: 'Przywróć wszystkie suwaki',
-            subtitle: 'Jasność 100%, kontrast 0, temperatura 0, nasycenie 0, equalizer 0 dB. Presety zostają.',
+            subtitle: 'Equalizer 0 dB, przestrzeń 0%. Presety zostają.',
         });
         const resetBtn = new Gtk.Button({
             label: 'Reset',
@@ -174,13 +92,10 @@ export default class SstunerPreferences extends ExtensionPreferences {
         });
         resetBtn.add_css_class('destructive-action');
         resetBtn.connect('clicked', () => {
-            settings.set_int('percent', 100);
-            settings.set_int('contrast', 0);
-            settings.set_int('temperature', 0);
-            settings.set_int('saturation', 0);
             settings.set_int('eq-bass', 0);
             settings.set_int('eq-mid', 0);
             settings.set_int('eq-treble', 0);
+            settings.set_int('eq-spatial', 0);
         });
         resetRow.add_suffix(resetBtn);
         reset.add(resetRow);
@@ -236,10 +151,10 @@ export default class SstunerPreferences extends ExtensionPreferences {
                         settings.set_int('eq-bass', preset.bass);
                         settings.set_int('eq-mid', preset.mid);
                         settings.set_int('eq-treble', preset.treble);
+                        settings.set_int('eq-spatial', preset.spatial ?? 0);
                     } else {
                         settings.set_int('percent', preset.percent);
                         settings.set_int('contrast', preset.contrast);
-                        settings.set_int('temperature', preset.temperature);
                         settings.set_int('saturation', preset.saturation ?? 0);
                     }
                     settings.set_string(spec.activeKey, preset.id);
@@ -309,7 +224,7 @@ export default class SstunerPreferences extends ExtensionPreferences {
 
             const factoryRow = new Adw.ActionRow({
                 title: 'Przywróć presety fabryczne',
-                subtitle: 'Dodaje brakujące (Noc, Dzień, Bas, Głos…). Twoich nie kasuje.',
+                subtitle: 'Dodaje brakujące (Bas, Głos, Przestrzeń…). Twoich nie kasuje.',
             });
             const factoryBtn = new Gtk.Button({
                 label: 'Przywróć',

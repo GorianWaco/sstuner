@@ -3,16 +3,17 @@ export const MAX_PRESETS = 10;
 export const NAME_MAX = 20;
 
 export const PICTURE_FACTORY = [
-    {id: 'neutral', name: 'Neutralny', percent: 100, contrast: 0, temperature: 0, saturation: 0},
-    {id: 'night', name: 'Noc', percent: 55, contrast: -6, temperature: 28, saturation: 0},
-    {id: 'day', name: 'Dzień', percent: 120, contrast: 4, temperature: -12, saturation: 0},
+    {id: 'neutral', name: 'Neutralny', percent: 100, contrast: 0, saturation: 0},
+    {id: 'night', name: 'Noc', percent: 55, contrast: -6, saturation: 0},
+    {id: 'day', name: 'Dzień', percent: 120, contrast: 4, saturation: 0},
 ];
 
 export const SOUND_FACTORY = [
-    {id: 'flat', name: 'Płaski', bass: 0, mid: 0, treble: 0},
-    {id: 'bass', name: 'Bas', bass: 7, mid: -1, treble: -2},
-    {id: 'voice', name: 'Głos', bass: -3, mid: 5, treble: 3},
-    {id: 'bright', name: 'Jasny', bass: -2, mid: 1, treble: 6},
+    {id: 'flat', name: 'Płaski', bass: 0, mid: 0, treble: 0, spatial: 0},
+    {id: 'bass', name: 'Bas', bass: 7, mid: -1, treble: -2, spatial: 0},
+    {id: 'voice', name: 'Głos', bass: -3, mid: 5, treble: 3, spatial: 15},
+    {id: 'bright', name: 'Jasny', bass: -2, mid: 1, treble: 6, spatial: 25},
+    {id: 'spatial', name: 'Przestrzeń', bass: 1, mid: 0, treble: 2, spatial: 60},
 ];
 
 export function newPresetId(prefix) {
@@ -51,7 +52,6 @@ export function normalizePicture(raw) {
         name,
         percent: asInt(raw.percent, 100),
         contrast: asInt(raw.contrast, 0),
-        temperature: asInt(raw.temperature, 0),
         saturation: asInt(raw.saturation, 0),
     };
 }
@@ -69,6 +69,7 @@ export function normalizeSound(raw) {
         bass: asInt(raw.bass, 0),
         mid: asInt(raw.mid, 0),
         treble: asInt(raw.treble, 0),
+        spatial: asInt(raw.spatial, 0),
     };
 }
 
@@ -105,14 +106,14 @@ export function serializePresets(list) {
 export function pictureEquals(a, b) {
     return a.percent === b.percent &&
         a.contrast === b.contrast &&
-        a.temperature === b.temperature &&
         a.saturation === b.saturation;
 }
 
 export function soundEquals(a, b) {
     return a.bass === b.bass &&
         a.mid === b.mid &&
-        a.treble === b.treble;
+        a.treble === b.treble &&
+        a.spatial === b.spatial;
 }
 
 export function findMatching(list, snapshot, kind) {
