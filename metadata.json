@@ -5,5 +5,5 @@
   "shell-version": ["45", "46", "47", "48", "49", "50"],
   "settings-schema": "org.gnome.shell.extensions.sstuner",
   "url": "https://github.com/GorianWaco/sstuner",
-  "version-name": "1.2"
+  "version-name": "1.3"
 }
