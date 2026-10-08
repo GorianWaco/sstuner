@@ -1,0 +1,222 @@
+# Polish translation for SSTuner.
+# Copyright (C) 2026 SSTuner contributors
+# This file is distributed under the same license as the SSTuner package.
+# Strings taken from the original Polish UI by Gorian Waco.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SSTuner\n"
+"Report-Msgid-Bugs-To: https://github.com/GorianWaco/sstuner/issues\n"
+"POT-Creation-Date: 2026-10-08 17:42+0200\n"
+"PO-Revision-Date: 2026-10-08 17:30+0200\n"
+"Last-Translator: Dmitrii\n"
+"Language-Team: Polish\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+
+#: extension.js:628
+#, javascript-format
+msgid "Decrease %s"
+msgstr "Zmniejsz %s"
+
+#: extension.js:629
+#, javascript-format
+msgid "Increase %s"
+msgstr "Zwiększ %s"
+
+#: extension.js:794
+msgid "Save preset"
+msgstr "Zapisz preset"
+
+#: extension.js:807
+msgid "Preset name"
+msgstr "Nazwa presetu"
+
+#: extension.js:815
+msgid "Save name"
+msgstr "Zapisz nazwę"
+
+#: extension.js:821
+msgid "Cancel"
+msgstr "Anuluj"
+
+#: extension.js:868
+#, javascript-format
+msgid "Load preset %s"
+msgstr "Wczytaj preset %s"
+
+#: extension.js:967
+msgid "Overwrite with current"
+msgstr "Nadpisz bieżącymi"
+
+#: extension.js:968
+msgid "Rename"
+msgstr "Zmień nazwę"
+
+#: extension.js:969 prefs.js:185
+msgid "Delete"
+msgstr "Usuń"
+
+#: extension.js:1101 extension.js:1176 prefs.js:27 prefs.js:30 prefs.js:75
+msgid "Sound"
+msgstr "Dźwięk"
+
+#: extension.js:1116
+msgid "Reset bass to 0 dB"
+msgstr "Przywróć bas 0 dB"
+
+#: extension.js:1117 presets.js:16
+msgid "Bass"
+msgstr "Bas"
+
+#: extension.js:1129
+msgid "Reset mid to 0 dB"
+msgstr "Przywróć średnie 0 dB"
+
+#: extension.js:1130
+msgid "Mid"
+msgstr "Średnie"
+
+#: extension.js:1142
+msgid "Reset treble to 0 dB"
+msgstr "Przywróć sopran 0 dB"
+
+#: extension.js:1143
+msgid "Treble"
+msgstr "Sopran"
+
+#: extension.js:1156
+msgid "Reset spatial sound to 0%"
+msgstr "Przywróć przestrzeń 0%"
+
+#: extension.js:1157
+msgid "Spatial sound"
+msgstr "Dźwięk przestrzenny"
+
+#: extension.js:1160
+msgid "off"
+msgstr "off"
+
+#: prefs.js:20
+#, javascript-format
+msgid "Bass %s dB, mid %s dB, treble %s dB, spatial %s%%"
+msgstr "Bas %s dB, średnie %s dB, sopran %s dB, przestrzeń %s%%"
+
+#: prefs.js:31
+msgid ""
+"Equalizer and spatial sound via PipeWire. 0 = unchanged. Values are restored "
+"after login."
+msgstr ""
+"Equalizer i przestrzeń przez PipeWire. 0 = bez zmian. Wartości wracają po "
+"zalogowaniu."
+
+#: prefs.js:35
+msgid "Bass at startup"
+msgstr "Bas po starcie"
+
+#: prefs.js:35
+msgid "Shelf ~120 Hz, range −12…+12 dB."
+msgstr "Półka ~120 Hz, zakres −12…+12 dB."
+
+#: prefs.js:36
+msgid "Mid at startup"
+msgstr "Średnie po starcie"
+
+#: prefs.js:36
+msgid "Peak ~1 kHz, range −12…+12 dB."
+msgstr "Szczyt ~1 kHz, zakres −12…+12 dB."
+
+#: prefs.js:37
+msgid "Shelf ~6 kHz, range −12…+12 dB."
+msgstr "Półka ~6 kHz, zakres −12…+12 dB."
+
+#: prefs.js:37
+msgid "Treble at startup"
+msgstr "Sopran po starcie"
+
+#: prefs.js:55
+msgid "Spatial sound at startup"
+msgstr "Przestrzeń po starcie"
+
+#: prefs.js:56
+msgid "0 = unchanged stereo, 100 = widest stage. Works in games too."
+msgstr "0 = stereo bez zmian, 100 = najszersza scena. Działa też w grach."
+
+#: prefs.js:70
+msgid "Sound presets"
+msgstr "Presety dźwięku"
+
+#: prefs.js:71
+msgid "Click = load, + = save. Bass / mid / treble / spatial."
+msgstr "Klik = wczytaj, + = zapisz. Bas / średnie / sopran / przestrzeń."
+
+#: prefs.js:88
+msgid "Reset all sliders"
+msgstr "Przywróć wszystkie suwaki"
+
+#: prefs.js:89
+msgid "Equalizer 0 dB, spatial sound 0%. Presets are kept."
+msgstr "Equalizer 0 dB, przestrzeń 0%. Presety zostają."
+
+#: prefs.js:92
+msgid "Reset"
+msgstr "Reset"
+
+#: prefs.js:149
+msgid "Load"
+msgstr "Wczytaj"
+
+#: prefs.js:170
+msgid "Overwrite with current sliders"
+msgstr "Nadpisz bieżącymi suwakami"
+
+#: prefs.js:201
+msgid "Save current sliders as a new preset"
+msgstr "Zapisz bieżące suwaki jako nowy preset"
+
+#: prefs.js:203
+#, javascript-format
+msgid "Limit of %d presets reached."
+msgstr "Limit %d presetów."
+
+#: prefs.js:204
+#, javascript-format
+msgid "Will be saved as “%s”."
+msgstr "Zostanie jako „%s”."
+
+#: prefs.js:207
+msgid "Add"
+msgstr "Dodaj"
+
+#: prefs.js:229
+msgid "Restore factory presets"
+msgstr "Przywróć presety fabryczne"
+
+#: prefs.js:230
+msgid ""
+"Adds the missing ones (Bass, Voice, Spatial…). Your own presets are kept."
+msgstr "Dodaje brakujące (Bas, Głos, Przestrzeń…). Twoich nie kasuje."
+
+#: prefs.js:233
+msgid "Restore"
+msgstr "Przywróć"
+
+#: presets.js:15
+msgid "Flat"
+msgstr "Płaski"
+
+#: presets.js:17
+msgid "Voice"
+msgstr "Głos"
+
+#: presets.js:18
+msgid "Bright"
+msgstr "Jasny"
+
+#: presets.js:19
+msgid "Spatial"
+msgstr "Przestrzeń"

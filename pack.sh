@@ -8,6 +8,7 @@ gnome-extensions pack \
   --extra-source=eq.conf \
   --extra-source=presets.js \
   --extra-source=LICENSE \
+  --podir=po \
   --force \
   -o "$out"
 echo "Packed: $out/sstuner@gorianwaco.github.io.shell-extension.zip"

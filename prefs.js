@@ -3,10 +3,11 @@ import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 
-import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import {
     MAX_PRESETS,
     SOUND_FACTORY,
+    displayName,
     newPresetId,
     nextDefaultName,
     parsePresets,
@@ -16,23 +17,24 @@ import {
 
 function formatSound(preset) {
     const sign = v => (v > 0 ? `+${v}` : String(v));
-    return `Bas ${sign(preset.bass)} dB, średnie ${sign(preset.mid)} dB, sopran ${sign(preset.treble)} dB, przestrzeń ${preset.spatial ?? 0}%`;
+    return _('Bass %s dB, mid %s dB, treble %s dB, spatial %s%%').format(
+        sign(preset.bass), sign(preset.mid), sign(preset.treble), preset.spatial ?? 0);
 }
 
 export default class SstunerPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const settings = this.getSettings();
-        const page = new Adw.PreferencesPage({title: 'Dźwięk'});
+        const page = new Adw.PreferencesPage({title: _('Sound')});
 
         const sound = new Adw.PreferencesGroup({
-            title: 'Dźwięk',
-            description: 'Equalizer i przestrzeń przez PipeWire. 0 = bez zmian. Wartości wracają po zalogowaniu.',
+            title: _('Sound'),
+            description: _('Equalizer and spatial sound via PipeWire. 0 = unchanged. Values are restored after login.'),
         });
 
         for (const [key, title, subtitle] of [
-            ['eq-bass', 'Bas po starcie', 'Półka ~120 Hz, zakres −12…+12 dB.'],
-            ['eq-mid', 'Średnie po starcie', 'Szczyt ~1 kHz, zakres −12…+12 dB.'],
-            ['eq-treble', 'Sopran po starcie', 'Półka ~6 kHz, zakres −12…+12 dB.'],
+            ['eq-bass', _('Bass at startup'), _('Shelf ~120 Hz, range −12…+12 dB.')],
+            ['eq-mid', _('Mid at startup'), _('Peak ~1 kHz, range −12…+12 dB.')],
+            ['eq-treble', _('Treble at startup'), _('Shelf ~6 kHz, range −12…+12 dB.')],
         ]) {
             const row = new Adw.SpinRow({
                 title,
@@ -50,8 +52,8 @@ export default class SstunerPreferences extends ExtensionPreferences {
         }
 
         const spatial = new Adw.SpinRow({
-            title: 'Przestrzeń po starcie',
-            subtitle: '0 = stereo bez zmian, 100 = najszersza scena. Działa też w grach.',
+            title: _('Spatial sound at startup'),
+            subtitle: _('0 = unchanged stereo, 100 = widest stage. Works in games too.'),
             adjustment: new Gtk.Adjustment({
                 lower: 0,
                 upper: 100,
@@ -65,12 +67,12 @@ export default class SstunerPreferences extends ExtensionPreferences {
         page.add(sound);
 
         this._addPresetGroup(page, settings, {
-            title: 'Presety dźwięku',
-            description: 'Klik = wczytaj, + = zapisz. Bas / średnie / sopran / przestrzeń.',
+            title: _('Sound presets'),
+            description: _('Click = load, + = save. Bass / mid / treble / spatial.'),
             listKey: 'sound-presets',
             activeKey: 'sound-preset-active',
             kind: 'sound',
-            namePrefix: 'Dźwięk',
+            namePrefix: _('Sound'),
             factory: SOUND_FACTORY,
             format: formatSound,
             snapshot: () => ({
@@ -83,11 +85,11 @@ export default class SstunerPreferences extends ExtensionPreferences {
 
         const reset = new Adw.PreferencesGroup();
         const resetRow = new Adw.ActionRow({
-            title: 'Przywróć wszystkie suwaki',
-            subtitle: 'Equalizer 0 dB, przestrzeń 0%. Presety zostają.',
+            title: _('Reset all sliders'),
+            subtitle: _('Equalizer 0 dB, spatial sound 0%. Presets are kept.'),
         });
         const resetBtn = new Gtk.Button({
-            label: 'Reset',
+            label: _('Reset'),
             valign: Gtk.Align.CENTER,
         });
         resetBtn.add_css_class('destructive-action');
@@ -123,9 +125,10 @@ export default class SstunerPreferences extends ExtensionPreferences {
             const active = settings.get_string(spec.activeKey);
 
             for (const preset of list) {
+                const name = displayName(preset, _);
                 const row = new Adw.EntryRow({
-                    title: preset.name,
-                    text: preset.name,
+                    title: name,
+                    text: name,
                     show_apply_button: true,
                 });
                 row.set_tooltip_text(spec.format(preset));
@@ -133,7 +136,7 @@ export default class SstunerPreferences extends ExtensionPreferences {
                     row.add_css_class('success');
 
                 row.connect('apply', () => {
-                    const name = sanitizeName(row.text, preset.name);
+                    const name = sanitizeName(row.text, displayName(preset, _));
                     const next = list.map(item => item.id === preset.id
                         ? {...item, name}
                         : item);
@@ -143,7 +146,7 @@ export default class SstunerPreferences extends ExtensionPreferences {
                 const loadBtn = new Gtk.Button({
                     icon_name: 'document-open-symbolic',
                     valign: Gtk.Align.CENTER,
-                    tooltip_text: 'Wczytaj',
+                    tooltip_text: _('Load'),
                 });
                 loadBtn.add_css_class('flat');
                 loadBtn.connect('clicked', () => {
@@ -164,7 +167,7 @@ export default class SstunerPreferences extends ExtensionPreferences {
                 const saveBtn = new Gtk.Button({
                     icon_name: 'document-save-symbolic',
                     valign: Gtk.Align.CENTER,
-                    tooltip_text: 'Nadpisz bieżącymi suwakami',
+                    tooltip_text: _('Overwrite with current sliders'),
                 });
                 saveBtn.add_css_class('flat');
                 saveBtn.connect('clicked', () => {
@@ -179,7 +182,7 @@ export default class SstunerPreferences extends ExtensionPreferences {
                 const delBtn = new Gtk.Button({
                     icon_name: 'user-trash-symbolic',
                     valign: Gtk.Align.CENTER,
-                    tooltip_text: 'Usuń',
+                    tooltip_text: _('Delete'),
                 });
                 delBtn.add_css_class('flat');
                 delBtn.connect('clicked', () => {
@@ -195,13 +198,13 @@ export default class SstunerPreferences extends ExtensionPreferences {
             }
 
             const addRow = new Adw.ActionRow({
-                title: 'Zapisz bieżące suwaki jako nowy preset',
+                title: _('Save current sliders as a new preset'),
                 subtitle: list.length >= MAX_PRESETS
-                    ? `Limit ${MAX_PRESETS} presetów.`
-                    : `Zostanie jako „${nextDefaultName(list, spec.namePrefix)}”.`,
+                    ? _('Limit of %d presets reached.').format(MAX_PRESETS)
+                    : _('Will be saved as “%s”.').format(nextDefaultName(list, spec.namePrefix)),
             });
             const addBtn = new Gtk.Button({
-                label: 'Dodaj',
+                label: _('Add'),
                 valign: Gtk.Align.CENTER,
                 sensitive: list.length < MAX_PRESETS,
             });
@@ -223,11 +226,11 @@ export default class SstunerPreferences extends ExtensionPreferences {
             rows.push(addRow);
 
             const factoryRow = new Adw.ActionRow({
-                title: 'Przywróć presety fabryczne',
-                subtitle: 'Dodaje brakujące (Bas, Głos, Przestrzeń…). Twoich nie kasuje.',
+                title: _('Restore factory presets'),
+                subtitle: _('Adds the missing ones (Bass, Voice, Spatial…). Your own presets are kept.'),
             });
             const factoryBtn = new Gtk.Button({
-                label: 'Przywróć',
+                label: _('Restore'),
                 valign: Gtk.Align.CENTER,
             });
             factoryBtn.connect('clicked', () => {

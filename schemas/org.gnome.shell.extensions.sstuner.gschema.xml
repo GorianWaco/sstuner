@@ -50,7 +50,7 @@
       <description>JSON z presetami jasności, kontrastu i nasycenia.</description>
     </key>
     <key name="sound-presets" type="s">
-      <default>'[{"id":"flat","name":"Płaski","bass":0,"mid":0,"treble":0,"spatial":0},{"id":"bass","name":"Bas","bass":7,"mid":-1,"treble":-2,"spatial":0},{"id":"voice","name":"Głos","bass":-3,"mid":5,"treble":3,"spatial":15},{"id":"bright","name":"Jasny","bass":-2,"mid":1,"treble":6,"spatial":25},{"id":"spatial","name":"Przestrzeń","bass":1,"mid":0,"treble":2,"spatial":60}]'</default>
+      <default>'[{"id":"flat","name":"Flat","bass":0,"mid":0,"treble":0,"spatial":0},{"id":"bass","name":"Bass","bass":7,"mid":-1,"treble":-2,"spatial":0},{"id":"voice","name":"Voice","bass":-3,"mid":5,"treble":3,"spatial":15},{"id":"bright","name":"Bright","bass":-2,"mid":1,"treble":6,"spatial":25},{"id":"spatial","name":"Spatial","bass":1,"mid":0,"treble":2,"spatial":60}]'</default>
       <summary>Presety dźwięku</summary>
       <description>JSON z presetami equalizera i dźwięku przestrzennego.</description>
     </key>

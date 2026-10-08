@@ -40,3 +40,23 @@ Pack for [extensions.gnome.org](https://extensions.gnome.org):
 ```
 
 See `UPLOAD.md` for the remaining publish steps (account, GitHub repo, review).
+
+## Translations
+
+UI strings are English in the source and translated with gettext.
+Available: Polish, Russian, German (`po/`). `./pack.sh` compiles them into
+the ZIP, so it needs `msgfmt` from the `gettext` package.
+
+After changing UI strings, refresh the template and merge it into the
+translations:
+
+```bash
+xgettext --language=JavaScript --from-code=UTF-8 --keyword=_ --keyword=N_ \
+  --package-name=SSTuner \
+  --msgid-bugs-address=https://github.com/GorianWaco/sstuner/issues \
+  --sort-by-file -o po/sstuner.pot \
+  extension.js prefs.js presets.js
+for po in po/*.po; do msgmerge --update --backup=none "$po" po/sstuner.pot; done
+```
+
+To add a language, copy `po/sstuner.pot` to `po/<lang>.po` and translate it.

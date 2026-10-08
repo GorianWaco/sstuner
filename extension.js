@@ -5,13 +5,14 @@ import GObject from 'gi://GObject';
 import Gio from 'gi://Gio';
 import St from 'gi://St';
 
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import {QuickSettingsItem, SystemIndicator} from 'resource:///org/gnome/shell/ui/quickSettings.js';
 import {Slider} from 'resource:///org/gnome/shell/ui/slider.js';
 import {
     MAX_PRESETS,
+    displayName,
     findMatching,
     newPresetId,
     nextDefaultName,
@@ -624,8 +625,8 @@ class ScaleRow extends St.BoxLayout {
             x_expand: true,
             y_align: Clutter.ActorAlign.CENTER,
         });
-        this._minus = this._makeStepButton('−', `Zmniejsz ${accessibleName}`, -1);
-        this._plus = this._makeStepButton('+', `Zwiększ ${accessibleName}`, 1);
+        this._minus = this._makeStepButton('−', _('Decrease %s').format(accessibleName), -1);
+        this._plus = this._makeStepButton('+', _('Increase %s').format(accessibleName), 1);
         slideRow.add_child(this._minus);
         slideRow.add_child(sliderBin);
         slideRow.add_child(this._plus);
@@ -790,7 +791,7 @@ class PresetBar extends St.BoxLayout {
             style_class: 'icon-button flat sstuner-preset-add',
             can_focus: true,
             x_expand: false,
-            accessible_name: `Zapisz preset ${namePrefix.toLowerCase()}`,
+            accessible_name: _('Save preset'),
         });
         this._addBtn.child = new St.Icon({icon_name: 'list-add-symbolic'});
         this._addBtn.connect('clicked', () => this._beginSave());
@@ -803,7 +804,7 @@ class PresetBar extends St.BoxLayout {
         });
         this._entry = new St.Entry({
             style_class: 'sstuner-preset-entry',
-            hint_text: 'Nazwa presetu',
+            hint_text: _('Preset name'),
             can_focus: true,
             x_expand: true,
         });
@@ -811,13 +812,13 @@ class PresetBar extends St.BoxLayout {
         const ok = new St.Button({
             style_class: 'icon-button flat',
             child: new St.Icon({icon_name: 'object-select-symbolic'}),
-            accessible_name: 'Zapisz nazwę',
+            accessible_name: _('Save name'),
         });
         ok.connect('clicked', () => this._commitEditor());
         const cancel = new St.Button({
             style_class: 'icon-button flat',
             child: new St.Icon({icon_name: 'window-close-symbolic'}),
-            accessible_name: 'Anuluj',
+            accessible_name: _('Cancel'),
         });
         cancel.connect('clicked', () => this._hideEditor());
         this._editor.add_child(this._entry);
@@ -856,14 +857,15 @@ class PresetBar extends St.BoxLayout {
         const list = this._list();
         const active = this._settings.get_string(this._activeKey);
         for (const preset of list) {
+            const name = displayName(preset, _);
             const chip = new St.Button({
-                label: preset.name,
+                label: name,
                 style_class: preset.id === active
                     ? 'sstuner-preset-chip sstuner-preset-chip-active'
                     : 'sstuner-preset-chip',
                 can_focus: true,
                 x_expand: false,
-                accessible_name: `Wczytaj preset ${preset.name}`,
+                accessible_name: _('Load preset %s').format(name),
             });
             chip.connect('clicked', () => this._load(preset));
             chip.connect('button-press-event', (_actor, event) => {
@@ -890,7 +892,9 @@ class PresetBar extends St.BoxLayout {
         if (!existing && list.length >= MAX_PRESETS)
             return;
         this._editing = existing;
-        this._entry.set_text(existing?.name ?? nextDefaultName(list, this._namePrefix));
+        this._entry.set_text(existing
+            ? displayName(existing, _)
+            : nextDefaultName(list, this._namePrefix));
         this._scroll.visible = false;
         this._addBtn.visible = false;
         this._editor.visible = true;
@@ -907,7 +911,9 @@ class PresetBar extends St.BoxLayout {
 
     _commitEditor() {
         const list = this._list();
-        const fallback = this._editing?.name ?? nextDefaultName(list, this._namePrefix);
+        const fallback = this._editing
+            ? displayName(this._editing, _)
+            : nextDefaultName(list, this._namePrefix);
         const name = sanitizeName(this._entry.get_text(), fallback);
         const snap = this._snapshot();
 
@@ -919,7 +925,7 @@ class PresetBar extends St.BoxLayout {
             this._settings.set_string(this._activeKey, this._editing.id);
         } else {
             const sameName = list.find(preset =>
-                preset.name.toLowerCase() === name.toLowerCase());
+                displayName(preset, _).toLowerCase() === name.toLowerCase());
             if (sameName) {
                 const next = list.map(preset => preset.id === sameName.id
                     ? {...sameName, ...snap, name}
@@ -958,9 +964,9 @@ class PresetBar extends St.BoxLayout {
     _openMenu(source, preset) {
         this._closeMenu();
         const menu = new PopupMenu.PopupMenu(source, 0.5, St.Side.BOTTOM);
-        menu.addAction('Nadpisz bieżącymi', () => this._overwrite(preset));
-        menu.addAction('Zmień nazwę', () => this._beginSave(preset));
-        menu.addAction('Usuń', () => this._remove(preset.id));
+        menu.addAction(_('Overwrite with current'), () => this._overwrite(preset));
+        menu.addAction(_('Rename'), () => this._beginSave(preset));
+        menu.addAction(_('Delete'), () => this._remove(preset.id));
 
         const actor = menu.actor ?? menu;
         Main.uiGroup.add_child(actor);
@@ -1092,7 +1098,7 @@ class AdjustPanel extends QuickSettingsItem {
         this.set_child(box);
 
         this._soundFold = new FoldSection({
-            title: 'Dźwięk',
+            title: _('Sound'),
             settings: extension.settings,
             key: 'sound-expanded',
             summary: () => this._soundHint(),
@@ -1107,8 +1113,8 @@ class AdjustPanel extends QuickSettingsItem {
 
         this._eqBass = new ScaleRow({
             iconName: 'audio-speakers-symbolic',
-            iconLabel: 'Przywróć bas 0 dB',
-            accessibleName: 'Equalizer bas',
+            iconLabel: _('Reset bass to 0 dB'),
+            accessibleName: _('Bass'),
             marks: eqMarks,
             min: MIN_EQ,
             max: MAX_EQ,
@@ -1120,8 +1126,8 @@ class AdjustPanel extends QuickSettingsItem {
 
         this._eqMid = new ScaleRow({
             iconName: 'audio-volume-medium-symbolic',
-            iconLabel: 'Przywróć średnie 0 dB',
-            accessibleName: 'Equalizer średnie',
+            iconLabel: _('Reset mid to 0 dB'),
+            accessibleName: _('Mid'),
             marks: eqMarks,
             min: MIN_EQ,
             max: MAX_EQ,
@@ -1133,8 +1139,8 @@ class AdjustPanel extends QuickSettingsItem {
 
         this._eqTreble = new ScaleRow({
             iconName: 'audio-volume-high-symbolic',
-            iconLabel: 'Przywróć sopran 0 dB',
-            accessibleName: 'Equalizer sopran',
+            iconLabel: _('Reset treble to 0 dB'),
+            accessibleName: _('Treble'),
             marks: eqMarks,
             min: MIN_EQ,
             max: MAX_EQ,
@@ -1147,11 +1153,11 @@ class AdjustPanel extends QuickSettingsItem {
         const spatial = buildScale(MIN_SPATIAL, MAX_SPATIAL, [0, 25, 50, 75, 100]);
         this._eqSpatial = new ScaleRow({
             iconName: 'audio-headphones-symbolic',
-            iconLabel: 'Przywróć przestrzeń 0%',
-            accessibleName: 'Dźwięk przestrzenny',
+            iconLabel: _('Reset spatial sound to 0%'),
+            accessibleName: _('Spatial sound'),
             marks: spatial.marks.map(mark => {
                 if (mark.pos === 0)
-                    return {...mark, label: 'off'};
+                    return {...mark, label: _('off')};
                 return mark;
             }),
             min: MIN_SPATIAL,
@@ -1167,7 +1173,7 @@ class AdjustPanel extends QuickSettingsItem {
             listKey: 'sound-presets',
             activeKey: 'sound-preset-active',
             kind: 'sound',
-            namePrefix: 'Dźwięk',
+            namePrefix: _('Sound'),
             snapshot: () => extension.eq?.snapshot() ?? {
                 bass: 0, mid: 0, treble: 0, spatial: 0,
             },
