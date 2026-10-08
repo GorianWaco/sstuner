@@ -44,8 +44,8 @@ See `UPLOAD.md` for the remaining publish steps (account, GitHub repo, review).
 ## Translations
 
 UI strings are English in the source and translated with gettext.
-Available: Polish, Russian, German (`po/`). `./pack.sh` compiles them into
-the ZIP, so it needs `msgfmt` from the `gettext` package.
+Available: Polish, Russian, German, Ukrainian (`po/`). `./pack.sh`
+compiles them into the ZIP, so it needs `msgfmt` from the `gettext` package.
 
 After changing UI strings, refresh the template and merge it into the
 translations:
