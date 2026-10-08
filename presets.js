@@ -8,13 +8,35 @@ export const PICTURE_FACTORY = [
     {id: 'day', name: 'Dzień', percent: 120, contrast: 4, saturation: 0},
 ];
 
+// Marks a string for xgettext; the caller translates it at display time.
+const N_ = str => str;
+
 export const SOUND_FACTORY = [
-    {id: 'flat', name: 'Płaski', bass: 0, mid: 0, treble: 0, spatial: 0},
-    {id: 'bass', name: 'Bas', bass: 7, mid: -1, treble: -2, spatial: 0},
-    {id: 'voice', name: 'Głos', bass: -3, mid: 5, treble: 3, spatial: 15},
-    {id: 'bright', name: 'Jasny', bass: -2, mid: 1, treble: 6, spatial: 25},
-    {id: 'spatial', name: 'Przestrzeń', bass: 1, mid: 0, treble: 2, spatial: 60},
+    {id: 'flat', name: N_('Flat'), bass: 0, mid: 0, treble: 0, spatial: 0},
+    {id: 'bass', name: N_('Bass'), bass: 7, mid: -1, treble: -2, spatial: 0},
+    {id: 'voice', name: N_('Voice'), bass: -3, mid: 5, treble: 3, spatial: 15},
+    {id: 'bright', name: N_('Bright'), bass: -2, mid: 1, treble: 6, spatial: 25},
+    {id: 'spatial', name: N_('Spatial'), bass: 1, mid: 0, treble: 2, spatial: 60},
 ];
+
+// Factory names saved before translations existed.
+const LEGACY_SOUND_NAMES = {
+    flat: 'Płaski',
+    bass: 'Bas',
+    voice: 'Głos',
+    bright: 'Jasny',
+    spatial: 'Przestrzeń',
+};
+
+/**
+ * Factory presets are shown translated until the user renames them.
+ */
+export function displayName(preset, translate) {
+    const factory = SOUND_FACTORY.find(item => item.id === preset.id);
+    if (factory && (preset.name === factory.name || preset.name === LEGACY_SOUND_NAMES[preset.id]))
+        return translate(factory.name);
+    return preset.name;
+}
 
 export function newPresetId(prefix) {
     return `${prefix}-${Date.now().toString(36)}`;
