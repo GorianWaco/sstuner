@@ -964,7 +964,7 @@ class PresetBar extends St.BoxLayout {
     _openMenu(source, preset) {
         this._closeMenu();
         const menu = new PopupMenu.PopupMenu(source, 0.5, St.Side.BOTTOM);
-        menu.addAction(_('Overwrite with current'), () => this._overwrite(preset));
+        menu.addAction(_('Overwrite with current values'), () => this._overwrite(preset));
         menu.addAction(_('Rename'), () => this._beginSave(preset));
         menu.addAction(_('Delete'), () => this._remove(preset.id));
 

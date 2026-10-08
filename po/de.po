@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SSTuner\n"
 "Report-Msgid-Bugs-To: https://github.com/GorianWaco/sstuner/issues\n"
-"POT-Creation-Date: 2026-10-08 17:42+0200\n"
-"PO-Revision-Date: 2026-10-08 17:30+0200\n"
+"POT-Creation-Date: 2026-10-08 17:49+0200\n"
+"PO-Revision-Date: 2026-10-08 17:49+0200\n"
 "Last-Translator: Dmitrii\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -48,7 +48,7 @@ msgid "Load preset %s"
 msgstr "Preset %s laden"
 
 #: extension.js:967
-msgid "Overwrite with current"
+msgid "Overwrite with current values"
 msgstr "Mit aktuellen Werten überschreiben"
 
 #: extension.js:968
@@ -172,11 +172,11 @@ msgstr "Laden"
 
 #: prefs.js:170
 msgid "Overwrite with current sliders"
-msgstr "Mit aktuellen Reglern überschreiben"
+msgstr "Mit aktuellen Reglerwerten überschreiben"
 
 #: prefs.js:201
 msgid "Save current sliders as a new preset"
-msgstr "Aktuelle Regler als neues Preset speichern"
+msgstr "Aktuelle Reglerwerte als neues Preset speichern"
 
 #: prefs.js:203
 #, javascript-format

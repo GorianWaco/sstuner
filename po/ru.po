@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SSTuner\n"
 "Report-Msgid-Bugs-To: https://github.com/GorianWaco/sstuner/issues\n"
-"POT-Creation-Date: 2026-10-08 17:42+0200\n"
-"PO-Revision-Date: 2026-10-08 17:30+0200\n"
+"POT-Creation-Date: 2026-10-08 17:49+0200\n"
+"PO-Revision-Date: 2026-10-08 17:49+0200\n"
 "Last-Translator: Dmitrii\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -49,8 +49,8 @@ msgid "Load preset %s"
 msgstr "Загрузить пресет %s"
 
 #: extension.js:967
-msgid "Overwrite with current"
-msgstr "Перезаписать текущими"
+msgid "Overwrite with current values"
+msgstr "Перезаписать текущими значениями"
 
 #: extension.js:968
 msgid "Rename"
@@ -66,7 +66,7 @@ msgstr "Звук"
 
 #: extension.js:1116
 msgid "Reset bass to 0 dB"
-msgstr "Сбросить бас на 0 дБ"
+msgstr "Сбросить бас до 0 дБ"
 
 #: extension.js:1117 presets.js:16
 msgid "Bass"
@@ -74,7 +74,7 @@ msgstr "Бас"
 
 #: extension.js:1129
 msgid "Reset mid to 0 dB"
-msgstr "Сбросить средние на 0 дБ"
+msgstr "Сбросить средние до 0 дБ"
 
 #: extension.js:1130
 msgid "Mid"
@@ -82,7 +82,7 @@ msgstr "Средние"
 
 #: extension.js:1142
 msgid "Reset treble to 0 dB"
-msgstr "Сбросить высокие на 0 дБ"
+msgstr "Сбросить высокие до 0 дБ"
 
 #: extension.js:1143
 msgid "Treble"
@@ -90,11 +90,11 @@ msgstr "Высокие"
 
 #: extension.js:1156
 msgid "Reset spatial sound to 0%"
-msgstr "Сбросить объёмный звук на 0%"
+msgstr "Сбросить пространственный звук до 0%"
 
 #: extension.js:1157
 msgid "Spatial sound"
-msgstr "Объёмный звук"
+msgstr "Пространственный звук"
 
 #: extension.js:1160
 msgid "off"
@@ -103,15 +103,15 @@ msgstr "выкл"
 #: prefs.js:20
 #, javascript-format
 msgid "Bass %s dB, mid %s dB, treble %s dB, spatial %s%%"
-msgstr "Бас %s дБ, средние %s дБ, высокие %s дБ, объём %s%%"
+msgstr "Бас %s дБ, средние %s дБ, высокие %s дБ, пространство %s%%"
 
 #: prefs.js:31
 msgid ""
 "Equalizer and spatial sound via PipeWire. 0 = unchanged. Values are restored "
 "after login."
 msgstr ""
-"Эквалайзер и объёмный звук через PipeWire. 0 — без изменений. Значения "
-"восстанавливаются после входа в систему."
+"Эквалайзер и пространственный звук через PipeWire. 0 — без изменений. "
+"Значения восстанавливаются после входа в систему."
 
 #: prefs.js:35
 msgid "Bass at startup"
@@ -119,7 +119,7 @@ msgstr "Бас при запуске"
 
 #: prefs.js:35
 msgid "Shelf ~120 Hz, range −12…+12 dB."
-msgstr "Полка ~120 Гц, диапазон −12…+12 дБ."
+msgstr "Шельфовый фильтр ~120 Гц, диапазон −12…+12 дБ."
 
 #: prefs.js:36
 msgid "Mid at startup"
@@ -127,11 +127,11 @@ msgstr "Средние при запуске"
 
 #: prefs.js:36
 msgid "Peak ~1 kHz, range −12…+12 dB."
-msgstr "Пик ~1 кГц, диапазон −12…+12 дБ."
+msgstr "Пиковый фильтр ~1 кГц, диапазон −12…+12 дБ."
 
 #: prefs.js:37
 msgid "Shelf ~6 kHz, range −12…+12 dB."
-msgstr "Полка ~6 кГц, диапазон −12…+12 дБ."
+msgstr "Шельфовый фильтр ~6 кГц, диапазон −12…+12 дБ."
 
 #: prefs.js:37
 msgid "Treble at startup"
@@ -139,7 +139,7 @@ msgstr "Высокие при запуске"
 
 #: prefs.js:55
 msgid "Spatial sound at startup"
-msgstr "Объёмный звук при запуске"
+msgstr "Пространственный звук при запуске"
 
 #: prefs.js:56
 msgid "0 = unchanged stereo, 100 = widest stage. Works in games too."
@@ -151,7 +151,8 @@ msgstr "Пресеты звука"
 
 #: prefs.js:71
 msgid "Click = load, + = save. Bass / mid / treble / spatial."
-msgstr "Клик — загрузить, + — сохранить. Бас / средние / высокие / объём."
+msgstr ""
+"Клик — загрузить, + — сохранить. Бас / средние / высокие / пространство."
 
 #: prefs.js:88
 msgid "Reset all sliders"
@@ -159,7 +160,7 @@ msgstr "Сбросить все ползунки"
 
 #: prefs.js:89
 msgid "Equalizer 0 dB, spatial sound 0%. Presets are kept."
-msgstr "Эквалайзер 0 дБ, объёмный звук 0%. Пресеты останутся."
+msgstr "Эквалайзер 0 дБ, пространственный звук 0%. Пресеты останутся."
 
 #: prefs.js:92
 msgid "Reset"
@@ -171,11 +172,11 @@ msgstr "Загрузить"
 
 #: prefs.js:170
 msgid "Overwrite with current sliders"
-msgstr "Перезаписать текущими ползунками"
+msgstr "Перезаписать текущими значениями ползунков"
 
 #: prefs.js:201
 msgid "Save current sliders as a new preset"
-msgstr "Сохранить текущие ползунки как новый пресет"
+msgstr "Сохранить текущие значения как новый пресет"
 
 #: prefs.js:203
 #, javascript-format
@@ -198,7 +199,8 @@ msgstr "Восстановить заводские пресеты"
 #: prefs.js:230
 msgid ""
 "Adds the missing ones (Bass, Voice, Spatial…). Your own presets are kept."
-msgstr "Добавляет недостающие (Бас, Голос, Объём…). Ваши пресеты не удаляются."
+msgstr ""
+"Добавляет недостающие (Бас, Голос, Пространство…). Ваши пресеты не удаляются."
 
 #: prefs.js:233
 msgid "Restore"
@@ -218,4 +220,4 @@ msgstr "Яркий"
 
 #: presets.js:19
 msgid "Spatial"
-msgstr "Объём"
+msgstr "Пространство"
